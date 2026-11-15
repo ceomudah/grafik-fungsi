@@ -1,0 +1,195 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Canvas</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            text-align: center;
+            padding: 30px 15px;
+        }
+
+        .container {
+            max-width: 750px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px #0002;
+        }
+
+        h1 {
+            color: #3730a3;
+        }
+
+        canvas {
+            width: 100%;
+            max-width: 640px;
+            background: #111827;
+            border: 3px solid #4f46e5;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 12px 20px;
+            margin: 8px 4px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            font-size: 15px;
+        }
+
+        #mulai {
+            background: #16a34a;
+        }
+
+        #berhenti {
+            background: #dc2626;
+        }
+
+        #foto {
+            background: #2563eb;
+        }
+
+        #status {
+            color: #475569;
+            margin-top: 15px;
+        }
+
+        #hasilFoto {
+            max-width: 100%;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Webcam ke Canvas</h1>
+    <p>Menampilkan video kamera secara langsung menggunakan HTML Canvas.</p>
+
+    <canvas id="canvas" width="640" height="480"></canvas>
+
+    <div>
+        <button id="mulai">▶ Mulai Kamera</button>
+        <button id="berhenti">■ Berhenti Kamera</button>
+        <button id="foto">📷 Ambil Foto</button>
+    </div>
+
+    <p id="status">Status: Kamera belum aktif</p>
+
+    <h3>Hasil Foto</h3>
+    <img id="hasilFoto" alt="Hasil foto akan muncul di sini">
+
+</div>
+
+<script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const tombolMulai = document.getElementById("mulai");
+    const tombolBerhenti = document.getElementById("berhenti");
+    const tombolFoto = document.getElementById("foto");
+
+    const status = document.getElementById("status");
+    const hasilFoto = document.getElementById("hasilFoto");
+
+    const video = document.createElement("video");
+
+    let stream = null;
+    let animasi = null;
+
+    video.autoplay = true;
+    video.playsInline = true;
+
+    // Memulai kamera
+    tombolMulai.addEventListener("click", async () => {
+
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: 640,
+                    height: 480
+                },
+                audio: false
+            });
+
+            video.srcObject = stream;
+            await video.play();
+
+            status.textContent = "Status: Kamera aktif";
+
+            tampilkanVideo();
+
+        } catch (error) {
+            status.textContent =
+                "Tidak dapat mengakses kamera: " + error.message;
+        }
+    });
+
+    // Menampilkan video ke canvas
+    function tampilkanVideo() {
+
+        if (!stream) return;
+
+        if (video.readyState >= 2) {
+            ctx.drawImage(
+                video,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+        }
+
+        animasi = requestAnimationFrame(tampilkanVideo);
+    }
+
+    // Menghentikan kamera
+    tombolBerhenti.addEventListener("click", () => {
+
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+
+        if (animasi) {
+            cancelAnimationFrame(animasi);
+            animasi = null;
+        }
+
+        video.srcObject = null;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        status.textContent = "Status: Kamera berhenti";
+    });
+
+    // Mengambil foto dari canvas
+    tombolFoto.addEventListener("click", () => {
+
+        if (!stream) {
+            alert("Silakan aktifkan kamera terlebih dahulu!");
+            return;
+        }
+
+        const foto = canvas.toDataURL("image/png");
+
+        hasilFoto.src = foto;
+
+    });
+
+</script>
+
+</body>
+</html>
